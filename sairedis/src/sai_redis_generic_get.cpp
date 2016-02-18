@@ -1,6 +1,44 @@
 #include "sai_redis.h"
 
 /**
+ *   Routine Description:
+ *    @brief Internal set attribute
+ *
+ *  Arguments:
+ *  @param[in] object_type - type of object
+ *  @param[in] serialized_object_id - serialized object id
+ *  @param[in] attr - attribute to serialize
+ *
+ *  Return Values:
+ *    @return  SAI_STATUS_SUCCESS on success
+ *             Failure status code on error
+ */
+sai_status_t internal_redis_generic_get(
+        _In_ sai_object_type_t object_type,
+        _In_ const std::string &serialized_object_id,
+        _In_ uint32_t attr_count,
+        _Out_ sai_attribute_t *attr_list)
+{
+    REDIS_LOG_ENTER();
+
+    if (attr_list == NULL)
+    {
+        REDIS_LOG_EXIT();
+        return SAI_STATUS_INVALID_PARAMETER;
+    }
+
+    // TODO get is different, must be a producer and a consumer and blocking api
+    // we need to serialize, push like create and then get
+    
+
+
+    REDIS_LOG_EXIT();
+
+    return SAI_STATUS_NOT_IMPLEMENTED;
+    //return SAI_STATUS_SUCCESS;
+}
+
+/**
  * Routine Description:
  *   @brief Generic get attribute
  *
@@ -22,7 +60,14 @@ sai_status_t redis_generic_get(
 {
     REDIS_LOG_ENTER();
 
-    sai_status_t status = SAI_STATUS_NOT_IMPLEMENTED;
+    std::string str_object_id;
+    sai_serialize_primitive(object_id, str_object_id);
+
+    sai_status_t status = internal_redis_generic_get(
+            object_type,
+            str_object_id,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -37,7 +82,14 @@ sai_status_t redis_generic_get(
 {
     REDIS_LOG_ENTER();
 
-    sai_status_t status = SAI_STATUS_NOT_IMPLEMENTED;
+    std::string str_fdb_entry;
+    sai_serialize_primitive(*fdb_entry, str_fdb_entry);
+
+    sai_status_t status = internal_redis_generic_get(
+            object_type,
+            str_fdb_entry,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -52,7 +104,14 @@ sai_status_t redis_generic_get(
 {
     REDIS_LOG_ENTER();
 
-    sai_status_t status = SAI_STATUS_NOT_IMPLEMENTED;
+    std::string str_neighbor_entry;
+    sai_serialize_primitive(*neighbor_entry, str_neighbor_entry);
+
+    sai_status_t status = internal_redis_generic_get(
+            object_type,
+            str_neighbor_entry,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -67,7 +126,14 @@ sai_status_t redis_generic_get(
 {
     REDIS_LOG_ENTER();
 
-    sai_status_t status = SAI_STATUS_NOT_IMPLEMENTED;
+    std::string str_route_entry;
+    sai_serialize_primitive(*unicast_route_entry, str_route_entry);
+
+    sai_status_t status = internal_redis_generic_get(
+            object_type,
+            str_route_entry,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -82,7 +148,14 @@ sai_status_t redis_generic_get_vlan(
 {
     REDIS_LOG_ENTER();
 
-    sai_status_t status = SAI_STATUS_NOT_IMPLEMENTED;
+    std::string str_vlan_id;
+    sai_serialize_primitive(vlan_id, str_vlan_id);
+
+    sai_status_t status = internal_redis_generic_get(
+            object_type,
+            str_vlan_id,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 

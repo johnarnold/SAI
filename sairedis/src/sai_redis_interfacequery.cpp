@@ -8,6 +8,10 @@ bool                   g_initialized = false;
 ssw::DBConnector      *g_db = NULL;
 ssw::ProducerTable    *g_asicState = NULL;
 
+// we probably don't need those to tables to access GET requests
+ssw::ProducerTable    *g_redisGetProducer = NULL;
+ssw::ConsumerTable    *g_redisGetConsumer = NULL;
+
 sai_status_t sai_api_initialize(
         _In_ uint64_t flags,
         _In_ const service_method_table_t* services)
@@ -35,6 +39,16 @@ sai_status_t sai_api_initialize(
         delete g_asicState;
 
     g_asicState = new ssw::ProducerTable(g_db, "ASIC_STATE");
+
+    if (g_redisGetProducer != NULL)
+        delete g_redisGetProducer;
+
+    g_redisGetProducer = new ssw::ProducerTable(g_db, "GET_QUERY");
+
+    if (g_redisGetConsumer != NULL)
+        delete g_redisGetConsumer;
+
+    g_redisGetConsumer = new ssw::ConsumerTable(g_db, "GET_QUERY");
 
     g_initialized = true;
 
