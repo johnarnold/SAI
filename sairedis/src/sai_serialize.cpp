@@ -138,6 +138,51 @@ sai_status_t sai_get_serialization_type(
     return SAI_STATUS_SUCCESS;
 }
 
+void sai_deserialize_buffer(
+        _In_ const std::string &s,
+        _In_ int index,
+        _In_ size_t buffer_size, 
+        _In_ void *buffer)
+{
+    unsigned char *mem = reinterpret_cast<unsigned char*>(buffer);
+
+    const char *ptr = s.c_str() + index;
+
+    for (size_t i = 0; i < buffer_size; i ++)
+    {
+        int u = char_to_int(ptr[2 * i]);
+        int l = char_to_int(ptr[2 * i + 1]);
+
+        unsigned char c = (u << 4) | l;
+
+        mem[i] = c;
+    }
+
+    index += buffer_size * 2;
+}
+
+void sai_free_buffer(void *buffer)
+{
+    delete (unsigned char*) buffer;
+}
+
+void sai_serialize_buffer(
+        _In_ const void *buffer,
+        _In_ size_t buffer_size,
+        _Out_ std::string &s)
+{
+    std::stringstream ss;
+
+    unsigned const char* mem = reinterpret_cast<const unsigned char*>(buffer);
+
+    for (size_t i = 0; i < buffer_size; i++)
+    {
+        ss << std::setfill('0') << std::setw(2) << std::hex << (unsigned int)mem[i];
+    }
+
+    s += ss.str();
+}
+
 sai_status_t sai_serialize_attr_id(
         _In_ const sai_attribute_t &attr,
         _Out_ std::string &s)
@@ -432,7 +477,7 @@ int char_to_int(
 }
 
 sai_status_t sai_deserialize_attr_value(
-        _In_ std::string &s,
+        _In_ const std::string &s,
         _In_ int &index,
         _In_ const sai_attr_serialization_type_t type,
         _Out_ sai_attribute_t &attr)
@@ -871,6 +916,147 @@ sai_status_t sai_deserialize_free_attribute_value(
         default:
             return SAI_STATUS_NOT_IMPLEMENTED;
     }
+
+    return SAI_STATUS_SUCCESS;
+}
+
+sai_status_t sai_serialize_fdb_event_notification_data(
+        _In_ sai_fdb_event_notification_data_t *fdb,
+        _Out_ std::string &s)
+{
+    SERIALIZE_LOG_ENTER();
+
+    sai_serialize_primitive(fdb->event_type, s);
+    sai_serialize_primitive(fdb->fdb_entry, s);
+    sai_serialize_primitive(fdb->attr_count, s);
+
+    for (uint32_t i = 0; i < fdb->attr_count; i++)
+    {
+        const sai_attribute_t *attr = &fdb->attr[i];
+
+        sai_attr_serialization_type_t serialization_type;
+        sai_status_t status = sai_get_serialization_type(SAI_OBJECT_TYPE_FDB, attr->id, serialization_type);
+
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SERIALIZE_LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
+                    SAI_OBJECT_TYPE_FDB,
+                    attr->id,
+                    status);
+
+            SERIALIZE_LOG_EXIT();
+            return status;
+        }
+
+        status = sai_serialize_attr_value(serialization_type, *attr, s);
+
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SERIALIZE_LOG_ERR("Unable to serialize attribute for object type: %u and attribute id: %u, status: %u",
+                SAI_OBJECT_TYPE_FDB,
+                attr->id,
+                status);
+
+            SERIALIZE_LOG_EXIT();
+            return status;
+        }
+    }
+
+    SERIALIZE_LOG_EXIT();
+
+    return SAI_STATUS_SUCCESS;
+}
+
+sai_status_t sai_deserialize_fdb_event_notification_data(
+        _In_ const std::string &s,
+        _In_ int index,
+        _Out_ sai_fdb_event_notification_data_t *fdb)
+{
+    sai_deserialize_primitive(s, index, fdb->event_type);
+    sai_deserialize_primitive(s, index, fdb->fdb_entry);
+    sai_deserialize_primitive(s, index, fdb->attr_count);
+
+    fdb->attr = sai_alloc_n_of_ptr_type(fdb->attr_count, fdb->attr);
+
+    for (uint32_t i = 0; i < fdb->attr_count; i++)
+    {
+        sai_attribute_t *attr = &fdb->attr[i];
+
+        sai_attr_serialization_type_t serialization_type;
+        sai_status_t status = sai_get_serialization_type(SAI_OBJECT_TYPE_FDB, attr->id, serialization_type);
+
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SERIALIZE_LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
+                    SAI_OBJECT_TYPE_FDB,
+                    attr->id,
+                    status);
+
+            SERIALIZE_LOG_EXIT();
+            return status;
+        }
+
+        status = sai_deserialize_attr_value(s, index, serialization_type, *attr);
+
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SERIALIZE_LOG_ERR("Unable to deserialize attribute for object type: %u and attribute id: %u, status: %u",
+                SAI_OBJECT_TYPE_FDB,
+                attr->id,
+                status);
+
+            SERIALIZE_LOG_EXIT();
+            return status;
+        }
+    }
+
+    return SAI_STATUS_SUCCESS;
+}
+
+sai_status_t sai_deserialize_free_fdb_event_notification_data(
+        _In_ sai_fdb_event_notification_data_t *fdb)
+{
+    SERIALIZE_LOG_ENTER();
+
+    // NOTE: on any failure we have memory leak since we don't
+    // know which serialization type was used, we dont know what
+    // should be deallocated
+
+    for (uint32_t i = 0; i < fdb->attr_count; i++)
+    {
+        sai_attribute_t *attr = &fdb->attr[i];
+
+        sai_attr_serialization_type_t serialization_type;
+        sai_status_t status = sai_get_serialization_type(SAI_OBJECT_TYPE_FDB, attr->id, serialization_type);
+
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SERIALIZE_LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
+                    SAI_OBJECT_TYPE_FDB,
+                    attr->id,
+                    status);
+
+            SERIALIZE_LOG_EXIT();
+            return status;
+        }
+
+        status = sai_deserialize_free_attribute_value(serialization_type, *attr);
+
+        if (status != SAI_STATUS_SUCCESS)
+        {
+            SERIALIZE_LOG_ERR("Unable to free attribute for object type: %u and attribute id: %u, status: %u",
+                SAI_OBJECT_TYPE_FDB,
+                attr->id,
+                status);
+
+            SERIALIZE_LOG_EXIT();
+            return status;
+        }
+    }
+
+    sai_dealloc_array(fdb->attr);
+
+    SERIALIZE_LOG_EXIT();
 
     return SAI_STATUS_SUCCESS;
 }

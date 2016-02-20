@@ -14,6 +14,19 @@
 
 #define TO_STR(x) #x
 
+#define SERIALIZE_LOG(level, fmt, arg ...) {\
+    fprintf(stderr, "%d: ", level); \
+    fprintf(stderr, fmt, ##arg); \
+    fprintf(stderr, "\n"); }
+
+#define SERIALIZE_LOG_ENTER()   SERIALIZE_LOG(SAI_LOG_DEBUG, "%s: >", __FUNCTION__)
+#define SERIALIZE_LOG_EXIT()    SERIALIZE_LOG(SAI_LOG_DEBUG, "%s: <", __FUNCTION__)
+#define SERIALIZE_LOG_DBG(fmt, arg ...) SERIALIZE_LOG(SAI_LOG_DEBUG, fmt, ##arg)
+#define SERIALIZE_LOG_INF(fmt, arg ...) SERIALIZE_LOG(SAI_LOG_INFO, fmt, ##arg)
+#define SERIALIZE_LOG_WRN(fmt, arg ...) SERIALIZE_LOG(SAI_LOG_WARN, fmt, ##arg)
+#define SERIALIZE_LOG_ERR(fmt, arg ...) SERIALIZE_LOG(SAI_LOG_ERROR, fmt, ##arg)
+#define SERIALIZE_LOG_NTC(fmt, arg ...) SERIALIZE_LOG(SAI_LOG_NOTICE, fmt, ##arg)
+
 typedef enum _sai_attr_serialization_type_t 
 {
     SAI_SERIALIZATION_TYPE_BOOL,
@@ -93,20 +106,33 @@ void sai_dealloc_list(
 }
 
 template<typename T>
+void sai_dealloc_array(
+        _In_ T &element)
+{
+    delete[] element;
+}
+
+void sai_deserialize_buffer(
+        _In_ const std::string &s,
+        _In_ int index,
+        _In_ size_t buffer_size, 
+        _In_ void *buffer);
+
+void sai_free_buffer(void * buffer);
+
+void sai_serialize_buffer(
+        _In_ const void *buffer, 
+        _In_ size_t buffer_size, 
+        _Out_ std::string &s);
+
+template<typename T>
 void sai_serialize_primitive(
         _In_ const T &element,
         _Out_ std::string &s)
 {
-    std::stringstream ss;
-
     unsigned const char* mem = reinterpret_cast<const unsigned char*>(&element);
 
-    for (size_t i = 0; i < sizeof(T); i++)
-    {
-        ss << std::setfill('0') << std::setw(2) << std::hex << (unsigned int)mem[i];
-    }
-
-    s += ss.str();
+    sai_serialize_buffer(mem, sizeof(T), s);
 }
 
 template<typename T>
@@ -130,8 +156,8 @@ void sai_free_list(
     element.list = NULL;
 }
 
-template<class T>
-T* sai_alloc_n_of_ptr_type(int count, T*)
+template<class T, typename U>
+T* sai_alloc_n_of_ptr_type(U count, T*)
 {
     return new T[count];
 }
@@ -150,7 +176,7 @@ int char_to_int(
 
 template<typename  T>
 void sai_deserialize_primitive(
-        _In_ std::string & s,
+        _In_ const std::string & s,
         _In_ int &index,
         _Out_ T &element)
 {
@@ -175,7 +201,7 @@ void sai_deserialize_primitive(
 
 template<typename T>
 void sai_deserialize_list(
-        _In_ std::string &s,
+        _In_ const std::string &s,
         _In_ int &index,
         _Out_ T &element)
 {
@@ -190,7 +216,7 @@ void sai_deserialize_list(
 }
 
 sai_status_t sai_deserialize_attr_value(
-        _In_ std::string &s,
+        _In_ const std::string &s,
         _In_ int &index,
         _In_ const sai_attr_serialization_type_t type,
         _Out_ sai_attribute_t &attr);
@@ -217,6 +243,19 @@ sai_status_t sai_get_serialization_type(
         _In_ const sai_object_type_t object_type,
         _In_ const sai_attr_id_t attr_id,
         _Out_ sai_attr_serialization_type_t &serialization_type);
+
+
+sai_status_t sai_serialize_fdb_event_notification_data(
+        _In_ sai_fdb_event_notification_data_t *fdb,
+        _Out_ std::string &s);
+
+sai_status_t sai_deserialize_fdb_event_notification_data(
+        _In_ const std::string &s,
+        _In_ int index,
+        _Out_ sai_fdb_event_notification_data_t *fdb);
+
+sai_status_t sai_deserialize_free_fdb_event_notification_data(
+        _In_ sai_fdb_event_notification_data_t *fdb);
 
 #endif // __SAI_SERIALIZE__
 

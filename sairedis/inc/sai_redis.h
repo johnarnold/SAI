@@ -45,18 +45,18 @@ extern const sai_vlan_api_t             redis_vlan_api;
 extern const sai_wred_api_t             redis_wred_api;
 
 #define UNREFERENCED_PARAMETER(X)
-#define UTILS_LOG(level, fmt, arg ...) {\
+#define REDIS_LOG(level, fmt, arg ...) {\
     fprintf(stderr, "%d: ", level); \
     fprintf(stderr, fmt, ##arg); \
     fprintf(stderr, "\n"); }
 
-#define REDIS_LOG_ENTER()   UTILS_LOG(SAI_LOG_DEBUG, "%s: >", __FUNCTION__)
-#define REDIS_LOG_EXIT()    UTILS_LOG(SAI_LOG_DEBUG, "%s: <", __FUNCTION__)
-#define REDIS_LOG_DBG(fmt, arg ...) UTILS_LOG(SAI_LOG_DEBUG, fmt, ##arg)
-#define REDIS_LOG_INF(fmt, arg ...) UTILS_LOG(SAI_LOG_INFO, fmt, ##arg)
-#define REDIS_LOG_WRN(fmt, arg ...) UTILS_LOG(SAI_LOG_WARN, fmt, ##arg)
-#define REDIS_LOG_ERR(fmt, arg ...) UTILS_LOG(SAI_LOG_ERROR, fmt, ##arg)
-#define REDIS_LOG_NTC(fmt, arg ...) UTILS_LOG(SAI_LOG_NOTICE, fmt, ##arg)
+#define REDIS_LOG_ENTER()   REDIS_LOG(SAI_LOG_DEBUG, "%s: >", __FUNCTION__)
+#define REDIS_LOG_EXIT()    REDIS_LOG(SAI_LOG_DEBUG, "%s: <", __FUNCTION__)
+#define REDIS_LOG_DBG(fmt, arg ...) REDIS_LOG(SAI_LOG_DEBUG, fmt, ##arg)
+#define REDIS_LOG_INF(fmt, arg ...) REDIS_LOG(SAI_LOG_INFO, fmt, ##arg)
+#define REDIS_LOG_WRN(fmt, arg ...) REDIS_LOG(SAI_LOG_WARN, fmt, ##arg)
+#define REDIS_LOG_ERR(fmt, arg ...) REDIS_LOG(SAI_LOG_ERROR, fmt, ##arg)
+#define REDIS_LOG_NTC(fmt, arg ...) REDIS_LOG(SAI_LOG_NOTICE, fmt, ##arg)
 
 // separate methods are needed for vlan to not confuse with object_id
 
