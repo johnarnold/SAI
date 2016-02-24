@@ -46,7 +46,7 @@ extern const sai_wred_api_t             redis_wred_api;
 
 #define UNREFERENCED_PARAMETER(X)
 #define REDIS_LOG(level, fmt, arg ...) {\
-    fprintf(stderr, "%d: ", level); \
+    fprintf(stderr, "(level:%d): ", level); \
     fprintf(stderr, fmt, ##arg); \
     fprintf(stderr, "\n"); }
 
