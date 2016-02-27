@@ -1,5 +1,46 @@
 #include "sai_redis.h"
 
+sai_status_t internal_redis_get_process(
+        _In_ sai_object_type_t object_type,
+        _In_ uint32_t attr_count,
+        _Out_ sai_attribute_t *attr_list,
+        _In_ ssw::KeyOpFieldsValuesTuple &kco)
+{
+    REDIS_LOG_ENTER();
+
+    // key is: object_type:object_id:sai_status
+
+    const std::string &key = kfvKey(kco);
+    const std::vector<ssw::FieldValueTuple> &values = kfvFieldsValues(kco);
+
+    std::string str_sai_status = key.substr(key.find_last_of(":") + 1);
+
+    sai_status_t status;
+
+    int index = 0;
+    sai_deserialize_primitive(str_sai_status, index, status);
+
+    // we could deserialize directly to user data, but list is alocated by deserializer
+    if (status == SAI_STATUS_SUCCESS)
+    {
+        ssw::SaiAttributeList list(object_type, values, false);
+
+        // fix id's
+        transfer_attributes(object_type, attr_count, list.get_attr_list(), attr_list, false);
+    }
+    else if (status == SAI_STATUS_BUFFER_OVERFLOW)
+    {
+        ssw::SaiAttributeList list(object_type, values, true);
+
+        // fix id's - in this place we dont have to fix id's since it's overflow
+        transfer_attributes(object_type, attr_count, list.get_attr_list(), attr_list, true);
+    }
+
+    REDIS_LOG_EXIT();
+
+    return status;
+}
+
 /**
  *   Routine Description:
  *    @brief Internal set attribute
@@ -21,21 +62,60 @@ sai_status_t internal_redis_generic_get(
 {
     REDIS_LOG_ENTER();
 
-    if (attr_list == NULL)
-    {
-        REDIS_LOG_EXIT();
-        return SAI_STATUS_INVALID_PARAMETER;
-    }
+    std::vector<ssw::FieldValueTuple> entry = ssw::SaiAttributeList::serialize_attr_list(
+            object_type, 
+            attr_count,
+            attr_list,
+            false);
 
-    // TODO get is different, must be a producer and a consumer and blocking api
-    // we need to serialize, push like create and then get
+    std::string str_object_type;
+
+    sai_serialize_primitive(object_type, str_object_type);
+
+    std::string key = str_object_type + ":" + serialized_object_id;
+
+    g_redisGetProducer->set(key, entry, "get");
+    g_redisGetProducer->del(key, "delget");
+
+    // wait for response
     
+    while (true)
+    {
+        int status = g_redisGetConsumer->select(2000); // 2 seconds to receive get request
 
+        if (status == ssw::ConsumerTable::DATA)
+        {
+            ssw::KeyOpFieldsValuesTuple kco;
+
+            g_redisGetConsumer->pop(kco);
+
+            const std::string &op = kfvOp(kco); 
+            const std::string &key = kfvKey(kco);
+
+            std::cout << "op = " << op << std::endl;
+            std::cout << "key = " << key << std::endl;
+
+            if (op != "getresponse") // ignore non response messages
+                continue;
+
+            sai_status_t sai_status = internal_redis_get_process(
+                    object_type, 
+                    attr_count, 
+                    attr_list, 
+                    kco);
+
+            REDIS_LOG_EXIT();
+
+            return sai_status;
+        }
+
+        REDIS_LOG_ERR("failed to get response for get status: %d", status);
+        break;
+    }
 
     REDIS_LOG_EXIT();
 
-    return SAI_STATUS_NOT_IMPLEMENTED;
-    //return SAI_STATUS_SUCCESS;
+    return SAI_STATUS_FAILURE;
 }
 
 /**

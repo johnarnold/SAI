@@ -43,12 +43,12 @@ sai_status_t sai_api_initialize(
     if (g_redisGetProducer != NULL)
         delete g_redisGetProducer;
 
-    g_redisGetProducer = new ssw::ProducerTable(g_db, "GET_QUERY");
+    g_redisGetProducer = new ssw::ProducerTable(g_db, "GETREQUEST");
 
     if (g_redisGetConsumer != NULL)
         delete g_redisGetConsumer;
 
-    g_redisGetConsumer = new ssw::ConsumerTable(g_db, "GET_QUERY");
+    g_redisGetConsumer = new ssw::ConsumerTable(g_db, "GETRESPONSE");
 
     g_initialized = true;
 

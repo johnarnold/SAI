@@ -7,10 +7,8 @@ sai_status_t internal_redis_generic_remove(
     REDIS_LOG_ENTER();
 
     std::string str_object_type;
-    sai_serialize_primitive(object_type, str_object_type);
 
-    std::string str_common_api;
-    sai_serialize_primitive(SAI_COMMON_API_REMOVE, str_common_api);
+    sai_serialize_primitive(object_type, str_object_type);
 
     std::string key = str_object_type + ":" + serialized_object_id;
 

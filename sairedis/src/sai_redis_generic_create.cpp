@@ -45,60 +45,15 @@ sai_status_t internal_redis_generic_create(
 {
     REDIS_LOG_ENTER();
 
-    if (attr_list == NULL)
-    {
-        REDIS_LOG_EXIT();
-        return SAI_STATUS_INVALID_PARAMETER;
-    }
+    std::vector<ssw::FieldValueTuple> entry = ssw::SaiAttributeList::serialize_attr_list(
+            object_type, 
+            attr_count, 
+            attr_list,
+            false);
 
     std::string str_object_type;
+
     sai_serialize_primitive(object_type, str_object_type);
-
-    std::string str_common_api;
-    sai_serialize_primitive(SAI_COMMON_API_CREATE, str_common_api);
-
-    std::vector<ssw::FieldValueTuple> entry;
-
-    for (uint32_t index = 0; index < attr_count; ++index)
-    {
-        const sai_attribute_t *attr = &attr_list[index];
-
-        sai_attr_serialization_type_t serialization_type;
-
-        sai_status_t status = sai_get_serialization_type(object_type, attr->id, serialization_type);
-
-        if (status != SAI_STATUS_SUCCESS)
-        {
-            REDIS_LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
-                    object_type,
-                    attr->id,
-                    status);
-
-            REDIS_LOG_EXIT();
-            return status;
-        }
-
-        std::string str_attr_id;
-        sai_serialize_attr_id(*attr, str_attr_id);
-
-        std::string str_attr_value;
-        status = sai_serialize_attr_value(serialization_type, *attr, str_attr_value);
-
-        if (status != SAI_STATUS_SUCCESS)
-        {
-            REDIS_LOG_ERR("Unable to serialize attribute for object type: %u and attribute id: %u, status: %u",
-                    object_type,
-                    attr->id,
-                    status);
-
-            REDIS_LOG_EXIT();
-            return status;
-        }
-
-        ssw::FieldValueTuple fvt(str_attr_id, str_attr_value);
-
-        entry.push_back(fvt);
-    }
 
     std::string key = str_object_type + ":" + serialized_object_id;
 
@@ -136,10 +91,10 @@ sai_status_t redis_generic_create(
     sai_serialize_primitive(*object_id, str_object_id);
 
     sai_status_t status = internal_redis_generic_create(
-                            object_type,
-                            str_object_id,
-                            attr_count,
-                            attr_list);
+            object_type,
+            str_object_id,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -158,10 +113,10 @@ sai_status_t redis_generic_create(
     sai_serialize_primitive(*fdb_entry, str_fdb_entry);
 
     sai_status_t status = internal_redis_generic_create(
-                            object_type,
-                            str_fdb_entry,
-                            attr_count,
-                            attr_list);
+            object_type,
+            str_fdb_entry,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -182,10 +137,10 @@ sai_status_t redis_generic_create(
     sai_serialize_primitive(*neighbor_entry, str_neighbor_entry);
 
     sai_status_t status = internal_redis_generic_create(
-                            object_type,
-                            str_neighbor_entry,
-                            attr_count,
-                            attr_list);
+            object_type,
+            str_neighbor_entry,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -206,10 +161,10 @@ sai_status_t redis_generic_create(
     sai_serialize_primitive(*unicast_route_entry, str_route_entry);
 
     sai_status_t status = internal_redis_generic_create(
-                            object_type,
-                            str_route_entry,
-                            attr_count,
-                            attr_list);
+            object_type,
+            str_route_entry,
+            attr_count,
+            attr_list);
 
     REDIS_LOG_EXIT();
 
@@ -230,10 +185,10 @@ sai_status_t redis_generic_create_vlan(
     sai_attribute_t dummy_attribute;
 
     sai_status_t status = internal_redis_generic_create(
-                            object_type,
-                            str_vlan_id,
-                            0,
-                            &dummy_attribute);
+            object_type,
+            str_vlan_id,
+            0,
+            &dummy_attribute);
 
     REDIS_LOG_EXIT();
 

@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <map>
 #include <tuple>
+#include <string.h>
 
 #define TO_STR(x) #x
 
@@ -138,9 +139,13 @@ void sai_serialize_primitive(
 template<typename T>
 void sai_serialize_list(
         _In_ const T &element,
-        _Out_ std::string &s)
+        _Out_ std::string &s,
+        _In_ bool countOnly)
 {
     sai_serialize_primitive(element.count, s);
+
+    if (countOnly)
+        return;
 
     for (size_t i = 0; i < element.count; i++)
     {
@@ -203,11 +208,15 @@ template<typename T>
 void sai_deserialize_list(
         _In_ const std::string &s,
         _In_ int &index,
-        _Out_ T &element)
+        _Out_ T &element,
+        _In_ bool countOnly)
 {
     sai_deserialize_primitive(s, index, element.count);
 
     sai_alloc_list(element.count, element);
+
+    if (countOnly)
+        return;
 
     for (size_t i = 0; i < element.count; i++)
     {
@@ -215,11 +224,40 @@ void sai_deserialize_list(
     }
 }
 
+template<typename T>
+void transfer_primitive(
+        _In_ const T &src_element,
+        _In_ T &dst_element)
+{
+    const unsigned char* src_mem = reinterpret_cast<const unsigned char*>(&src_element);
+    unsigned char* dst_mem = reinterpret_cast<unsigned char*>(&dst_element);
+
+    memcpy(dst_mem, src_mem, sizeof(T));
+}
+
+template<typename T>
+void transfer_list(
+        _In_ const T &src_element,
+        _In_ T &dst_element,
+        _In_ bool countOnly)
+{
+    transfer_primitive(src_element.count, dst_element.count);
+
+    if (countOnly)
+        return;
+
+    for (size_t i = 0; i < src_element.count; i++)
+    {
+        transfer_primitive(src_element.list[i], dst_element.list[i]);
+    }
+}
+
 sai_status_t sai_deserialize_attr_value(
         _In_ const std::string &s,
         _In_ int &index,
         _In_ const sai_attr_serialization_type_t type,
-        _Out_ sai_attribute_t &attr);
+        _Out_ sai_attribute_t &attr,
+        _In_ bool countOnly);
 
 sai_status_t sai_deserialize_free_attribute_value(
         _In_ const sai_attr_serialization_type_t type,
@@ -228,7 +266,8 @@ sai_status_t sai_deserialize_free_attribute_value(
 sai_status_t sai_serialize_attr(
         _In_ const sai_attr_serialization_type_t type,
         _In_ const sai_attribute_t &attr,
-        _Out_ std::string &s);
+        _Out_ std::string &s,
+        _In_ bool countOnly);
 
 sai_status_t sai_serialize_attr_id(
         _In_ const sai_attribute_t &attr,
@@ -237,7 +276,8 @@ sai_status_t sai_serialize_attr_id(
 sai_status_t sai_serialize_attr_value(
         _In_ const sai_attr_serialization_type_t type,
         _In_ const sai_attribute_t &attr,
-        _Out_ std::string &s);
+        _Out_ std::string &s,
+        _In_ bool countOnly);
 
 sai_status_t sai_get_serialization_type(
         _In_ const sai_object_type_t object_type,
@@ -257,6 +297,17 @@ sai_status_t sai_deserialize_fdb_event_notification_data(
 sai_status_t sai_deserialize_free_fdb_event_notification_data(
         _In_ sai_fdb_event_notification_data_t *fdb);
 
+sai_status_t transfer_attribute(
+        _In_ sai_attr_serialization_type_t serialization_type,
+        _In_ sai_attribute_t &src_attr,
+        _In_ sai_attribute_t &dst_attr,
+        _In_ bool countOnly);
+
+void transfer_attributes(
+        _In_ sai_object_type_t object_type,
+        _In_ uint32_t attr_count,
+        _In_ sai_attribute_t *src_attr_list,
+        _In_ sai_attribute_t *dst_attr_list,
+        _In_ bool countOnly);
+
 #endif // __SAI_SERIALIZE__
-
-

@@ -20,66 +20,15 @@ sai_status_t internal_redis_generic_set(
 {
     REDIS_LOG_ENTER();
 
-    if (attr == NULL)
-    {
-        REDIS_LOG_EXIT();
-        return SAI_STATUS_INVALID_PARAMETER;
-    }
-
-    sai_attr_serialization_type_t serialization_type;
-
-    sai_status_t status = sai_get_serialization_type(object_type, attr->id, serialization_type);
-
-    if (status != SAI_STATUS_SUCCESS)
-    {
-        REDIS_LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
-                object_type,
-                attr->id,
-                status);
-
-        REDIS_LOG_EXIT();
-        return status;
-    }
+    std::vector<ssw::FieldValueTuple> entry = ssw::SaiAttributeList::serialize_attr_list(
+            object_type, 
+            1,
+            attr,
+            false);
 
     std::string str_object_type;
+
     sai_serialize_primitive(object_type, str_object_type);
-
-    std::string str_common_api;
-    sai_serialize_primitive(SAI_COMMON_API_SET, str_common_api);
-
-    //std::string str_object_type;
-    //status = sai_get_object_type_string(object_type, str_object_type);
-
-    //if (status != SAI_STATUS_SUCCESS)
-    //{
-    //    REDIS_LOG_ERR("Unable to find object type string for %u, status: %u",
-    //            object_type,
-    //            status);
-
-    //    REDIS_LOG_EXIT();
-    //    return status;
-    //}
-
-    std::string str_attr_id;
-    sai_serialize_attr_id(*attr, str_attr_id);
-
-    std::string str_attr_value;
-    status = sai_serialize_attr_value(serialization_type, *attr, str_attr_value);
-
-    if (status != SAI_STATUS_SUCCESS)
-    {
-        REDIS_LOG_ERR("Unable to serialize attribute for object type: %u and attribute id: %u, status: %u",
-                object_type,
-                attr->id,
-                status);
-
-        REDIS_LOG_EXIT();
-        return status;
-    }
-
-    ssw::FieldValueTuple fvt(str_attr_id, str_attr_value);
-
-    std::vector<ssw::FieldValueTuple> entry = { fvt };
 
     std::string key = str_object_type + ":" + serialized_object_id;
 

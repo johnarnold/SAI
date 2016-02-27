@@ -6,6 +6,7 @@
 
 #include "sai.h"
 #include "sai_serialize.h"
+#include "sai_attribute_list.h"
 
 #include "sswcommon/dbconnector.h"
 #include "sswcommon/producertable.h"
