@@ -61,6 +61,8 @@ sai_status_t internal_redis_generic_create(
 
     REDIS_LOG_EXIT();
 
+    // we assume create will always succeed which may not be true
+    // we should make this synchronous call
     return SAI_STATUS_SUCCESS;
 }
 
@@ -85,6 +87,7 @@ sai_status_t redis_generic_create(
 {
     REDIS_LOG_ENTER();
 
+    // on create vid is put in db by syncd
     *object_id = redis_create_virtual_object_id(object_type);
 
     std::string str_object_id;
@@ -131,7 +134,6 @@ sai_status_t redis_generic_create(
 {
     REDIS_LOG_ENTER();
 
-    // rif_id and ip_address
     // rif_id must be valid virtual id
     std::string str_neighbor_entry;
     sai_serialize_primitive(*neighbor_entry, str_neighbor_entry);
@@ -155,7 +157,6 @@ sai_status_t redis_generic_create(
 {
     REDIS_LOG_ENTER();
 
-    // vr_id and destintion
     // vr_id must be valid virtual router id
     std::string str_route_entry;
     sai_serialize_primitive(*unicast_route_entry, str_route_entry);

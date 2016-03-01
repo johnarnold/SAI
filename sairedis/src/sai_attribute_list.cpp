@@ -81,7 +81,7 @@ std::vector<ssw::FieldValueTuple> SaiAttributeList::serialize_attr_list(
 
         if (status != SAI_STATUS_SUCCESS)
         {
-            //REDIS_LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
+            //LOG_ERR("Unable to find serialization type for object type: %u and attribute id: %u, status: %u",
             //        object_type,
             //        attr->id,
             //        status);
@@ -97,7 +97,7 @@ std::vector<ssw::FieldValueTuple> SaiAttributeList::serialize_attr_list(
 
         if (status != SAI_STATUS_SUCCESS)
         {
-            //REDIS_LOG_ERR("Unable to serialize attribute for object type: %u and attribute id: %u, status: %u",
+            //LOG_ERR("Unable to serialize attribute for object type: %u and attribute id: %u, status: %u",
             //        object_type,
             //        attr->id,
             //        status);

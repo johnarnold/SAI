@@ -73,6 +73,7 @@ sai_status_t redis_generic_remove(
 {
     REDIS_LOG_ENTER();
 
+    // rif_id must be valid virtual id
     std::string str_neighbor_entry;
     sai_serialize_primitive(*neighbor_entry, str_neighbor_entry);
 
@@ -91,6 +92,7 @@ sai_status_t redis_generic_remove(
 {
     REDIS_LOG_ENTER();
 
+    // vr_id must be valid virtual router id
     std::string str_route_entry;
     sai_serialize_primitive(*unicast_route_entry, str_route_entry);
 
