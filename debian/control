@@ -1,0 +1,12 @@
+Source: libsairedis
+Section: net
+Priority: optional
+Maintainer: Microsoft <no-reply@microsoft.com>
+Build-Depends: debhelper (>= 9), autotools-dev
+Standards-Version: 3.9.3
+
+Package: libsairedis
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Description: This package contains the Switch Abstraction Interface libraries.
+
